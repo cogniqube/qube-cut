@@ -35,7 +35,11 @@ function basename(p) {
 function toFileUrl(p) {
   let normalized = p.replace(/\\/g, '/');
   if (!normalized.startsWith('/')) normalized = '/' + normalized;
-  return 'file://' + encodeURI(normalized);
+  // encodeURI leaves # and ? unescaped (they're valid URI delimiters), but a
+  // literal filename may contain them — escape those two manually so the
+  // path isn't truncated at a "fragment" or "query" boundary.
+  const encoded = encodeURI(normalized).replace(/#/g, '%23').replace(/\?/g, '%3F');
+  return 'file://' + encoded;
 }
 
 async function addFiles(paths) {
