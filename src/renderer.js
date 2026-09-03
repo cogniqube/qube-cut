@@ -32,6 +32,12 @@ function basename(p) {
   return p.split(/[\\/]/).pop();
 }
 
+function toFileUrl(p) {
+  let normalized = p.replace(/\\/g, '/');
+  if (!normalized.startsWith('/')) normalized = '/' + normalized;
+  return 'file://' + encodeURI(normalized);
+}
+
 async function addFiles(paths) {
   for (const p of paths) {
     if (library.some((l) => l.path === p)) continue;
@@ -129,12 +135,18 @@ function loadIntoPreview(item) {
   activeMedia = item;
   placeholderEl.style.display = 'none';
   playerEl.style.display = 'block';
-  playerEl.src = 'file://' + item.path;
+  playerEl.src = toFileUrl(item.path);
   playerEl.load();
 
   splitBtn.disabled = false;
   deleteBtn.disabled = false;
   addToTimelineBtn.disabled = false;
+
+  playerEl.onerror = () => {
+    placeholderEl.style.display = 'block';
+    placeholderEl.textContent = `Could not load "${item.name}". The file may have moved, or its format isn't supported.`;
+    playerEl.style.display = 'none';
+  };
 
   playerEl.onloadedmetadata = () => {
     const dur = playerEl.duration || item.duration || 0;
